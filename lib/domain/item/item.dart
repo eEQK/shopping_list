@@ -8,7 +8,10 @@ class Item with _$Item {
   factory Item({
     required String id,
     required String name,
+
     required String category,
+    required int categoryAccent,
+
     required int quantity,
     @Default(false) bool purchased,
   }) = _Item;

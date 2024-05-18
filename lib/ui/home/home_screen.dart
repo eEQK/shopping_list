@@ -5,11 +5,15 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_list/domain/item/item.dart';
 import 'package:shopping_list/domain/item/item_controller.dart';
+import 'package:shopping_list/ui/edit/edit_screen.dart';
 import 'package:shopping_list/ui/widgets/constants.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:shopping_list/utils/records.dart';
 import 'package:yaru/yaru.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
+  static const route = '/';
+
   const HomeScreen({super.key});
 
   @override
@@ -19,10 +23,14 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<String> selectedCategories = [];
 
+  bool reordering = false;
+
   @override
   Widget build(BuildContext context) {
-    final categories =
-        ref.watch(itemControllerProvider).map((e) => e.category).toSet();
+    final categories = ref
+        .watch(itemControllerProvider)
+        .map((e) => (e.category, e.categoryAccent))
+        .toSet();
 
     return Scaffold(
       appBar: _buildAppBar(),
@@ -58,24 +66,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildFilters(Set<String> categories) {
+  Widget _buildFilters(Set<(String, int)> categories) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8.0),
       child: Wrap(
         spacing: 4,
         runSpacing: 4,
-        children: categories
-            .map(
-              (e) => FilterChip(
-                label: Text(e),
-                selected: selectedCategories.contains(e),
-                onSelected: (s) => setState(() {
-                  if (s) {
-                    selectedCategories.add(e);
-                  } else {
-                    selectedCategories.remove(e);
-                  }
-                }),
+        children: <Widget>[
+          const _MenuOptionsButton(),
+        ]
+            .followedBy(
+              categories.mapR2(
+                (category, color) => FilterChip(
+                  label: Text(category),
+                  selected: selectedCategories.contains(category),
+                  selectedColor: Color(color),
+                  onSelected: (s) => setState(() {
+                    if (s) {
+                      selectedCategories.add(category);
+                    } else {
+                      selectedCategories.remove(category);
+                    }
+                  }),
+                ),
               ),
             )
             .toList(),
@@ -96,6 +109,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         kHorizontalSpace12,
       ],
+    );
+  }
+}
+
+class _MenuOptionsButton extends ConsumerStatefulWidget {
+  const _MenuOptionsButton();
+
+  @override
+  ConsumerState<_MenuOptionsButton> createState() => _MenuOptionsButtonState();
+}
+
+class _MenuOptionsButtonState extends ConsumerState<_MenuOptionsButton> {
+  final controller = MenuController();
+
+  @override
+  Widget build(BuildContext context) {
+    final itemController = ref.watch(itemControllerProvider.notifier);
+
+    return MenuAnchor(
+      controller: controller,
+      menuChildren: [
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.check),
+          onPressed: () =>
+              itemController.updateAll((e) => e.copyWith(purchased: true)),
+          child: const Text('Mark all as completed'),
+        ),
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.delete_forever),
+          onPressed: () => itemController.removeWhere((e) => true),
+          child: const Text('Remove all'),
+        ),
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.delete),
+          onPressed: () => itemController.removeWhere((e) => e.purchased),
+          child: const Text('Remove all completed'),
+        ),
+      ],
+      child: IconButton(
+        icon: const Icon(Icons.more_vert),
+        onPressed: () => controller.open(),
+      ),
     );
   }
 }
@@ -130,39 +185,21 @@ class _ItemTile extends ConsumerStatefulWidget {
 }
 
 class _ItemTileState extends ConsumerState<_ItemTile> {
-  bool _editMode = false;
-
   @override
   Widget build(BuildContext context) {
-    if (_editMode) {
-      return _NewItemTile(
-        initialItem: widget.item,
-        saveLabel: 'Zapisz',
-        onSave: (values) {
-          ref.read(itemControllerProvider.notifier).update(
-                widget.item.copyWith(
-                  name: values['name']!,
-                  category: values['category']!,
-                ),
-              );
-          setState(() {
-            _editMode = false;
-          });
-        },
-      );
-    }
+    final accent = Color(widget.item.categoryAccent);
 
     return YaruTile(
       title: Text(widget.item.name),
       subtitle: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: Colors.indigo.withOpacity(0.05),
+          color: accent.withOpacity(0.6),
           borderRadius: BorderRadius.circular(32),
         ),
         child: Text(
           widget.item.category,
-          style: const TextStyle(fontSize: 14, color: Colors.indigo),
+          style: TextStyle(fontSize: 14, color: accent.darken(70)),
         ),
       ),
       trailing: Row(
@@ -172,11 +209,14 @@ class _ItemTileState extends ConsumerState<_ItemTile> {
             style: IconButton.styleFrom(
               backgroundColor: Colors.indigo.withOpacity(0.03),
             ),
-            onPressed: () {
-              ref.read(itemControllerProvider.notifier).update(
-                    widget.item.copyWith(quantity: widget.item.quantity + 1),
-                  );
-            },
+            onPressed: widget.item.quantity >= 10
+                ? null
+                : () {
+                    ref.read(itemControllerProvider.notifier).update(
+                          widget.item
+                              .copyWith(quantity: widget.item.quantity + 1),
+                        );
+                  },
           ),
           SizedBox(
             width: 32,
@@ -202,9 +242,10 @@ class _ItemTileState extends ConsumerState<_ItemTile> {
           kHorizontalSpace24,
           YaruIconButton(
             icon: const Icon(Icons.edit),
-            onPressed: () => setState(() {
-              _editMode = !_editMode;
-            }),
+            onPressed: () => Navigator.of(context).pushNamed(
+              EditScreen.route,
+              arguments: widget.item,
+            ),
           ),
           kHorizontalSpace8,
           YaruIconButton(
@@ -231,10 +272,8 @@ class _NewItemTile extends ConsumerStatefulWidget {
   const _NewItemTile({
     required this.saveLabel,
     required this.onSave,
-    this.initialItem,
   });
 
-  final Item? initialItem;
   final String saveLabel;
   final ValueChanged<Map<String, String>> onSave;
 
@@ -250,10 +289,6 @@ class __NewItemTileState extends ConsumerState<_NewItemTile> {
     return Padding(
       padding: const EdgeInsets.all(12.0),
       child: FormBuilder(
-        initialValue: {
-          'name': widget.initialItem?.name ?? '',
-          'category': widget.initialItem?.category ?? '',
-        },
         key: _formKey,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

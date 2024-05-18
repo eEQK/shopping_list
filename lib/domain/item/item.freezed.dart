@@ -23,6 +23,7 @@ mixin _$Item {
   String get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   String get category => throw _privateConstructorUsedError;
+  int get categoryAccent => throw _privateConstructorUsedError;
   int get quantity => throw _privateConstructorUsedError;
   bool get purchased => throw _privateConstructorUsedError;
 
@@ -37,7 +38,12 @@ abstract class $ItemCopyWith<$Res> {
       _$ItemCopyWithImpl<$Res, Item>;
   @useResult
   $Res call(
-      {String id, String name, String category, int quantity, bool purchased});
+      {String id,
+      String name,
+      String category,
+      int categoryAccent,
+      int quantity,
+      bool purchased});
 }
 
 /// @nodoc
@@ -56,6 +62,7 @@ class _$ItemCopyWithImpl<$Res, $Val extends Item>
     Object? id = null,
     Object? name = null,
     Object? category = null,
+    Object? categoryAccent = null,
     Object? quantity = null,
     Object? purchased = null,
   }) {
@@ -72,6 +79,10 @@ class _$ItemCopyWithImpl<$Res, $Val extends Item>
           ? _value.category
           : category // ignore: cast_nullable_to_non_nullable
               as String,
+      categoryAccent: null == categoryAccent
+          ? _value.categoryAccent
+          : categoryAccent // ignore: cast_nullable_to_non_nullable
+              as int,
       quantity: null == quantity
           ? _value.quantity
           : quantity // ignore: cast_nullable_to_non_nullable
@@ -92,7 +103,12 @@ abstract class _$$ItemImplCopyWith<$Res> implements $ItemCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {String id, String name, String category, int quantity, bool purchased});
+      {String id,
+      String name,
+      String category,
+      int categoryAccent,
+      int quantity,
+      bool purchased});
 }
 
 /// @nodoc
@@ -108,6 +124,7 @@ class __$$ItemImplCopyWithImpl<$Res>
     Object? id = null,
     Object? name = null,
     Object? category = null,
+    Object? categoryAccent = null,
     Object? quantity = null,
     Object? purchased = null,
   }) {
@@ -124,6 +141,10 @@ class __$$ItemImplCopyWithImpl<$Res>
           ? _value.category
           : category // ignore: cast_nullable_to_non_nullable
               as String,
+      categoryAccent: null == categoryAccent
+          ? _value.categoryAccent
+          : categoryAccent // ignore: cast_nullable_to_non_nullable
+              as int,
       quantity: null == quantity
           ? _value.quantity
           : quantity // ignore: cast_nullable_to_non_nullable
@@ -143,6 +164,7 @@ class _$ItemImpl implements _Item {
       {required this.id,
       required this.name,
       required this.category,
+      required this.categoryAccent,
       required this.quantity,
       this.purchased = false});
 
@@ -156,6 +178,8 @@ class _$ItemImpl implements _Item {
   @override
   final String category;
   @override
+  final int categoryAccent;
+  @override
   final int quantity;
   @override
   @JsonKey()
@@ -163,7 +187,7 @@ class _$ItemImpl implements _Item {
 
   @override
   String toString() {
-    return 'Item(id: $id, name: $name, category: $category, quantity: $quantity, purchased: $purchased)';
+    return 'Item(id: $id, name: $name, category: $category, categoryAccent: $categoryAccent, quantity: $quantity, purchased: $purchased)';
   }
 
   @override
@@ -175,6 +199,8 @@ class _$ItemImpl implements _Item {
             (identical(other.name, name) || other.name == name) &&
             (identical(other.category, category) ||
                 other.category == category) &&
+            (identical(other.categoryAccent, categoryAccent) ||
+                other.categoryAccent == categoryAccent) &&
             (identical(other.quantity, quantity) ||
                 other.quantity == quantity) &&
             (identical(other.purchased, purchased) ||
@@ -183,8 +209,8 @@ class _$ItemImpl implements _Item {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, name, category, quantity, purchased);
+  int get hashCode => Object.hash(
+      runtimeType, id, name, category, categoryAccent, quantity, purchased);
 
   @JsonKey(ignore: true)
   @override
@@ -205,6 +231,7 @@ abstract class _Item implements Item {
       {required final String id,
       required final String name,
       required final String category,
+      required final int categoryAccent,
       required final int quantity,
       final bool purchased}) = _$ItemImpl;
 
@@ -216,6 +243,8 @@ abstract class _Item implements Item {
   String get name;
   @override
   String get category;
+  @override
+  int get categoryAccent;
   @override
   int get quantity;
   @override
